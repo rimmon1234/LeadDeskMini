@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './AdminDashboard.css';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const AdminDashboard = () => {
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
@@ -16,7 +18,7 @@ const AdminDashboard = () => {
 
   const fetchLeads = async (searchQuery = '') => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/leads?search=${searchQuery}`);
+      const response = await axios.get(`${API_URL}/api/leads?search=${searchQuery}`);
       setLeads(response.data);
     } catch (error) {
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -39,7 +41,7 @@ const AdminDashboard = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await axios.patch(`http://localhost:5000/api/leads/${id}/status`, { status: newStatus });
+      await axios.patch(`${API_URL}/api/leads/${id}/status`, { status: newStatus });
       
       // Update local state
       setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
@@ -51,7 +53,7 @@ const AdminDashboard = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:5000/api/auth/logout');
+      await axios.post(`${API_URL}/api/auth/logout`);
     } catch (e) {
       console.error('Logout failed', e);
     }

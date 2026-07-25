@@ -2,6 +2,8 @@ import { useState } from 'react';
 import axios from 'axios';
 import './LandingPage.css';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const LandingPage = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -24,7 +26,7 @@ const LandingPage = () => {
     setErrorMessage('');
 
     try {
-      await axios.post('http://localhost:5000/api/leads', formData);
+      await axios.post(`${API_URL}/api/leads`, formData);
       setStatus('success');
       setFormData({ name: '', email: '', budget_range: '', source: '', message: '' });
     } catch (error) {

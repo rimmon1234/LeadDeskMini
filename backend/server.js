@@ -105,7 +105,11 @@ app.post('/api/auth/login', async (req, res) => {
 
 // 3. Admin Logout
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('token');
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'none'
+  });
   res.json({ success: true });
 });
 

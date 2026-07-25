@@ -5,12 +5,29 @@ import './AdminDashboard.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const BUDGET_RANGES = ['<$5k', '$5k-$10k', '$10k-$25k', '$25k+'];
+
 const AdminDashboard = () => {
   const [leads, setLeads] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [expandedMessageId, setExpandedMessageId] = useState(null);
+  const [budgetFilters, setBudgetFilters] = useState(new Set(BUDGET_RANGES));
   const navigate = useNavigate();
+
+  const toggleBudgetFilter = (range) => {
+    setBudgetFilters(prev => {
+      const next = new Set(prev);
+      if (next.has(range)) {
+        next.delete(range);
+      } else {
+        next.add(range);
+      }
+      return next;
+    });
+  };
+
+  const filteredLeads = leads.filter(lead => budgetFilters.has(lead.budget_range));
 
   const toggleMessage = (id) => {
     setExpandedMessageId(expandedMessageId === id ? null : id);
@@ -152,8 +169,22 @@ const AdminDashboard = () => {
             <button type="submit" className="btn-primary">Search</button>
           </form>
           <div className="stats-pill">
-            Total Leads: {leads.length}
+            Showing: {filteredLeads.length} / {leads.length}
           </div>
+        </div>
+
+        <div className="budget-filters">
+          <span className="filter-label">Budget Range:</span>
+          {BUDGET_RANGES.map(range => (
+            <label key={range} className="budget-checkbox">
+              <input
+                type="checkbox"
+                checked={budgetFilters.has(range)}
+                onChange={() => toggleBudgetFilter(range)}
+              />
+              <span className="checkbox-label">{range}</span>
+            </label>
+          ))}
         </div>
 
         <div className="table-responsive">
@@ -170,12 +201,12 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {leads.length === 0 ? (
+              {filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="empty-state">No leads found.</td>
+                  <td colSpan="7" className="empty-state">No leads found.</td>
                 </tr>
               ) : (
-                leads.map(lead => (
+                filteredLeads.map(lead => (
                   <tr key={lead.id}>
                     <td className="date-cell">
                       {new Date(lead.created_at).toLocaleDateString()}

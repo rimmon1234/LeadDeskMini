@@ -16,19 +16,10 @@ const AdminDashboard = () => {
 
   const fetchLeads = async (searchQuery = '') => {
     try {
-      const token = localStorage.getItem('adminToken');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-
-      const response = await axios.get(`http://localhost:5000/api/leads?search=${searchQuery}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`http://localhost:5000/api/leads?search=${searchQuery}`);
       setLeads(response.data);
     } catch (error) {
       if (error.response?.status === 401 || error.response?.status === 403) {
-        localStorage.removeItem('adminToken');
         navigate('/login');
       }
       console.error('Failed to fetch leads', error);
@@ -48,10 +39,7 @@ const AdminDashboard = () => {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const token = localStorage.getItem('adminToken');
-      await axios.patch(`http://localhost:5000/api/leads/${id}/status`, { status: newStatus }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axios.patch(`http://localhost:5000/api/leads/${id}/status`, { status: newStatus });
       
       // Update local state
       setLeads(leads.map(lead => lead.id === id ? { ...lead, status: newStatus } : lead));
@@ -61,8 +49,12 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
+  const handleLogout = async () => {
+    try {
+      await axios.post('http://localhost:5000/api/auth/logout');
+    } catch (e) {
+      console.error('Logout failed', e);
+    }
     navigate('/login');
   };
 

@@ -1,4 +1,6 @@
-# Digital Heroes Project
+# LeadDesk Mini
+
+> Built for the Digital Heroes Full Stack Development Internship Task.
 
 This repository contains the backend and frontend code for the Digital Heroes web application.
 
@@ -27,7 +29,7 @@ Represents an administrative user with access to the Admin Dashboard to manage l
 
 ## Authentication Approach
 
-The application uses **JSON Web Tokens (JWT)** for securing administrative API routes.
+The application uses **JSON Web Tokens (JWT)** combined with **HTTP-only cookies** for securing administrative API routes and frontend access.
 
 1. **Password Security**: Admin passwords are never stored in plain text. They are hashed using `bcrypt` during user creation/seeding.
 2. **Login Process**:
@@ -35,7 +37,7 @@ The application uses **JSON Web Tokens (JWT)** for securing administrative API r
    - The backend validates the request body using `zod`.
    - The password is authenticated against the stored `password_hash` using `bcrypt.compare`.
    - Upon success, the server generates a JWT containing the user's `id` and `email`, signed with a secret key (`JWT_SECRET`), which expires in 24 hours.
-3. **Protected Routes**:
-   - Routes that access sensitive data (like `GET /api/leads` and `PATCH /api/leads/:id/status`) are protected by the `authenticateToken` middleware.
-   - The frontend must include the JWT in the `Authorization` header of the request, formatted as `Bearer <token>`.
-   - The middleware verifies the token using `jsonwebtoken`. If the token is missing, invalid, or expired, the request is rejected with a `401 Unauthorized` or `403 Forbidden` response.
+   - This JWT is set as an **HTTP-only cookie** (`token`) on the client, ensuring it cannot be accessed via JavaScript (`localStorage`), mitigating XSS risks.
+3. **Protected Routes & Components**:
+   - Backend routes that access sensitive data (like `GET /api/leads` and `PATCH /api/leads/:id/status`) are protected by the `authenticateToken` middleware, which reads and verifies the token from the HTTP-only cookie using `cookie-parser` and `jsonwebtoken`.
+   - The frontend uses a `<ProtectedRoute>` wrapper around the `/admin` route. On mount, it verifies authentication status by calling the `/api/auth/check` endpoint. If unauthenticated, the user is automatically redirected to the login page.

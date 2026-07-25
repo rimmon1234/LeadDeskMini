@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import cookieParser from 'cookie-parser';
 
 dotenv.config();
 
@@ -13,7 +14,11 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-dev-only';
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json());
 
 // --- VALIDATION SCHEMAS ---
@@ -36,8 +41,7 @@ const statusSchema = z.object({
 
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = req.cookies.token;
   
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
@@ -83,7 +87,13 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token });
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+    res.json({ success: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ errors: error.errors });
@@ -93,7 +103,18 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// 3. Get all leads (Protected)
+// 3. Admin Logout
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ success: true });
+});
+
+// 4. Check Auth Status
+app.get('/api/auth/check', authenticateToken, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+// 5. Get all leads (Protected)
 app.get('/api/leads', authenticateToken, async (req, res) => {
   try {
     const { search } = req.query;

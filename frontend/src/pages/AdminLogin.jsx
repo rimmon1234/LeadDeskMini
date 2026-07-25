@@ -16,12 +16,11 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      await axios.post('http://localhost:5000/api/auth/login', {
         email,
         password
       });
       
-      localStorage.setItem('adminToken', response.data.token);
       navigate('/admin');
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please check your credentials.');

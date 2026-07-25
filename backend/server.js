@@ -42,7 +42,7 @@ const statusSchema = z.object({
 // --- MIDDLEWARE ---
 const authenticateToken = (req, res, next) => {
   const token = req.cookies.token;
-  
+
   if (!token) return res.status(401).json({ error: 'Access denied' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
@@ -76,7 +76,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email } });
-    
+
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -90,7 +90,7 @@ app.post('/api/auth/login', async (req, res) => {
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000
     });
     res.json({ success: true });
